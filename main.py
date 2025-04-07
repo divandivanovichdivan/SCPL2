@@ -33,7 +33,7 @@ def predict_rub_salary_sj(vacancy):
     return expected_salary
 
 
-def get_sj_language_info(language, payload, headers):
+def get_sj_language_stat(language, payload, headers):
     url = "https://api.superjob.ru/2.0/vacancies/"
     vacancies_processed = 0
     salaries_sum = 0
@@ -50,11 +50,11 @@ def get_sj_language_info(language, payload, headers):
                 vacancies_processed += 1
                 salaries_sum += expected_salary
         payload["page"] += 1
-    vacancies_col = vacancies["total"]
-    return vacancies_col, vacancies_processed, salaries_sum
+    vacancies_number = vacancies["total"]
+    return vacancies_number, vacancies_processed, salaries_sum
 
 
-def get_hh_language_info(language, payload):
+def get_hh_language_stat(language, payload):
     salaries_sum = 0
     vacancies_processed = 0
     vacancies = {
@@ -73,14 +73,14 @@ def get_hh_language_info(language, payload):
                 salaries_sum += expected_salary
         payload["page"] += 1
     payload["page"] = 0
-    vacancies_col = vacancies["found"]
-    return vacancies_col, vacancies_processed, salaries_sum
+    vacancies_number = vacancies["found"]
+    return vacancies_number, vacancies_processed, salaries_sum
 
 
 def main():
     load_dotenv()
     sj_headers = {
-            "X-Api-App-Id": os.environ["SJ_X-Api-App-Id"],
+            "X-Api-App-Id": os.environ["SJ_X_API_APP_ID"],
         }
     sj_table_data = [
         [
@@ -99,7 +99,7 @@ def main():
         "C++",
         "C#",
         "TypeScript"
-        ]    
+        ]
     sj_payload = {
         "town": "Москва",
         "page": 0,
@@ -108,14 +108,14 @@ def main():
     for language in languages:
         sj_payload["keyword"] = language
         sj_payload["page"] = 0
-        vacancies_col, vacancies_processed, salaries_sum = get_sj_language_info(language, sj_payload, sj_headers)
+        vacancies_number, vacancies_processed, salaries_sum = get_sj_language_stat(language, sj_payload, sj_headers)
         if vacancies_processed:
             average_salary = salaries_sum // vacancies_processed
         else:
             average_salary = None
         sj_table_data.append([
             language,
-            vacancies_col,
+            vacancies_number,
             vacancies_processed,
             average_salary])
     table = AsciiTable(sj_table_data, "Superjob Moscow")
@@ -129,11 +129,14 @@ def main():
             "Вакансий обработано",
             "Средняя зарплата"
             ]
-        ]   
+        ]
+    programmer_index = 96
+    moscow_index = 1
+    publication_period = 28
     hh_payload = {
-        "professional_role": 96,
-        "area": 1,
-        "period": 28,
+        "professional_role": programmer_index,
+        "area": moscow_index,
+        "period": publication_period,
         "text": None,
         "page": 0,
         "per_page": 100
@@ -142,14 +145,14 @@ def main():
         time.sleep(1)
         hh_payload["text"] = language
         hh_payload["page"] = 0
-        vacancies_col, vacancies_processed, salaries_sum = get_hh_language_info(language, hh_payload)
+        vacancies_number, vacancies_processed, salaries_sum = get_hh_language_stat(language, hh_payload)
         if vacancies_processed:
             average_salary = salaries_sum // vacancies_processed
         else:
             average_salary = 0
         hh_table_data.append([
             language,
-            vacancies_col,
+            vacancies_number,
             vacancies_processed,
             average_salary])
     table = AsciiTable(hh_table_data, "HeadHunter Moscow")
@@ -159,4 +162,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
